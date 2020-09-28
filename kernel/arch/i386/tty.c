@@ -7,6 +7,8 @@
 
 #include "vga.h"
 
+#define TAB_LEN 4
+
 static const size_t VGA_WIDTH = 80;
 static const size_t VGA_HEIGHT = 25;
 static uint16_t* const VGA_MEMORY = (uint16_t*) 0xB8000;
@@ -33,17 +35,32 @@ void terminal_setcolor(uint8_t color) {
 	terminal_color = color;
 }
 
-void terminal_putentryat(unsigned char c, uint8_t color, size_t x, size_t y) {
-	const size_t index = y * VGA_WIDTH + x;
-	terminal_buffer[index] = vga_entry(c, color);
+void terminal_putentryat(unsigned char c, uint8_t color, size_t x, size_t y) {	
+	const size_t index = y * VGA_WIDTH + x; //set the position of the character
+	terminal_buffer[index] = vga_entry(c, color);  //write the character to the screen
 }
 
 void terminal_putchar(char c) {
 	unsigned char uc = c;
+
+	switch (c) {
+		case '\n':
+			terminal_row += 1;
+			terminal_column = 0;
+			return;
+		case '\t':
+			terminal_column += TAB_LEN;
+			return;
+	}
+
 	terminal_putentryat(uc, terminal_color, terminal_column, terminal_row);
-	if (++terminal_column == VGA_WIDTH) {
+
+	terminal_column++;
+
+	if (terminal_column == VGA_WIDTH) {
 		terminal_column = 0;
-		if (++terminal_row == VGA_HEIGHT)
+		terminal_row++;
+		if (terminal_row == VGA_HEIGHT)
 			terminal_row = 0;
 	}
 }
